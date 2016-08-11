@@ -5489,7 +5489,11 @@ Function Show-InstallationWelcome {
 		[int32]$ForceCountdown = 0,
 		## Specify whether to display a custom message specified in the XML file. Custom message must be populated for each language section in the XML.
 		[Parameter(Mandatory=$false)]
-		[switch]$CustomText = $false
+		[switch]$CustomText = $false,
+		## Specify if you absolutely want to warn the user from closing apps, even in Silent DeployMode
+		[Parameter(Mandatory=$false)]         
+		[switch]$ShowClosingAppsInSilent
+
 	)
 	
 	Begin {
@@ -5499,7 +5503,10 @@ Function Show-InstallationWelcome {
 	}
 	Process {
 		## If running in NonInteractive mode, force the processes to close silently
-		If ($deployModeNonInteractive) { $Silent = $true }
+		If ($deployModeNonInteractive) { 
+			$Silent = $true
+			$ShowClosingAppsInSilent = $false
+		}
 		
 		## If using Zero-Config MSI Deployment, append any executables found in the MSI to the CloseApps list
 		If ($useDefaultMsi) { $CloseApps = "$CloseApps,$defaultMsiExecutablesList" }
@@ -5618,7 +5625,7 @@ Function Show-InstallationWelcome {
 		If (($deferTimes -lt 0) -and (-not ($deferDeadlineUniversal))) { $AllowDefer = $false }
 		
 		## Prompt the user to close running applications and optionally defer if enabled
-		If (-not ($deployModeSilent) -and (-not ($silent))) {
+		If (-not ($deployModeSilent) -and (-not ($silent)) -or ($ShowClosingAppsInSilent)) {
 			If ($forceCloseAppsCountdown -gt 0) {
 				#  Keep the same variable for countdown to simplify the code:
 				$closeAppsCountdown = $forceCloseAppsCountdown
